@@ -11,6 +11,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from authlib.integrations.flask_client import OAuth
 import secrets
 from sqlalchemy import inspect # Import inspect
+import time # Import time untuk delay
 
 # Konfigurasi Upload Gambar dan OAuth
 UPLOAD_FOLDER = 'static/images'
@@ -18,11 +19,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
-
-# PENTING: Menggunakan DATABASE_URL dari Koyeb untuk PostgreSQL
-# Jika tidak ada, fallback ke SQLite untuk pengembangan lokal
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
-
+# Kembali menggunakan SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db = SQLAlchemy(app)
 
@@ -369,8 +367,13 @@ with app.app_context():
     models = [User, Post, Project, HomePage, AboutPage]
     
     for model in models:
-        if not inspector.has_table(model.__tablename__):
-            model.__table__.create(db.engine)
+        # Gunakan db.engine.connect() untuk mendapatkan Connection
+        # Tambahkan delay untuk mengurangi risiko race condition di lingkungan serverless
+        time.sleep(0.5) 
+        with db.engine.connect() as connection:
+            if not inspector.has_table(model.__tablename__):
+                model.__table__.create(connection) # Buat tabel dengan connection
+            connection.commit() # Commit perubahan DDL
 
     # Tambahkan user admin pertama kali jika belum ada
     if User.query.count() == 0:
