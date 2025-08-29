@@ -392,10 +392,8 @@ def edit_about():
 
 # Inisialisasi database saat aplikasi dimulai
 # Penting: Ini harus berada di luar blok if __name__ == '__main__': agar dijalankan oleh Gunicorn di Koyeb
-# Inisialisasi database saat aplikasi dimulai
-# Gunakan db.metadata.create_all() untuk mendukung checkfirst=True
 with app.app_context():
-    db.metadata.create_all(db.engine, checkfirst=True)
+    db.create_all(checkfirst=True) # Tambahkan checkfirst=True di sini
 
 if __name__ == '__main__':
     # Pastikan Anda sudah mengatur variabel lingkungan untuk SECRET_KEY, GOOGLE_CLIENT_ID, dan GOOGLE_CLIENT_SECRET
