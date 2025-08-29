@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog{% endblock %}
+
+{% block content %}
+<h1 class="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">Blog</h1>
+<div class="space-y-8">
+    {% for post in posts %}
+    <div class="bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition duration-300">
+        <h2 class="text-2xl font-bold mb-2 text-green-400">{{ post.title }}</h2>
+        <p class="text-sm text-gray-500 mb-4">{{ post.date_posted }}</p>
+        <p class="text-gray-400">{{ post.content }}</p>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-500">Belum ada postingan blog.</p>
+    {% endfor %}
+</div>
+{% endblock %}

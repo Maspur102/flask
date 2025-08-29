@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Portofolio Saya{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">Proyek Portofolio</h1>
+
+    {% if projects %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for project in projects %}
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105 hover:shadow-2xl">
+            {% if project.image_file %}
+            <img src="{{ url_for('static', filename='images/' + project.image_file) }}" 
+                 alt="Project Image" 
+                 class="w-full h-64 object-cover cursor-pointer"
+                 onclick="openModal('{{ url_for('static', filename='images/' + project.image_file) }}', '{{ project.description }}')">
+            {% else %}
+            <div class="w-full h-64 bg-gray-700 flex items-center justify-center text-gray-400">Tidak ada gambar</div>
+            {% endif %}
+            <div class="p-6">
+                <p class="text-gray-300 text-sm leading-relaxed">{{ project.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-gray-400 text-lg">Belum ada proyek yang ditambahkan.</p>
+    {% endif %}
+</div>
+
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50 hidden p-4">
+    <div class="relative bg-gray-900 rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <button class="absolute top-3 right-3 text-white text-3xl font-bold z-10" onclick="closeModal()">&times;</button>
+        <img id="modalImage" src="" alt="Enlarged Project Image" class="max-w-full max-h-[70vh] object-contain mx-auto">
+        <p id="modalDescription" class="text-white text-center p-4 text-lg bg-gray-800"></p>
+    </div>
+</div>
+
+<script>
+    function openModal(imageSrc, description) {
+        document.getElementById('modalImage').src = imageSrc;
+        document.getElementById('modalDescription').innerText = description;
+        document.getElementById('imageModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Mencegah scroll di belakang modal
+    }
+
+    function closeModal() {
+        document.getElementById('imageModal').classList.add('hidden');
+        document.body.style.overflow = ''; // Mengaktifkan kembali scroll
+    }
+
+    // Menutup modal jika klik di luar konten gambar
+    document.getElementById('imageModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}

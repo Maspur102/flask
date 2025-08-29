@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'includes/_head.html' %}
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body class="animated-gradient-bg text-gray-200 min-h-screen flex flex-col">
+    <div class="animated-shapes-container">
+        <div class="shape-1"></div>
+        <div class="shape-2"></div>
+    </div>
+
+    {% include 'includes/_navbar.html' %}
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="p-3 mb-4 text-sm rounded-lg {{ 'bg-green-600 text-white' if category == 'success' else 'bg-red-600 text-white' }}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+    {% include 'includes/_footer.html' %}
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}About{% endblock %}
+
+{% block content %}
+<div class="text-center py-12">
+    <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">Tentang Saya</h1>
+    
+    {% if homepage_data and homepage_data.profile_pic %}
+    <img src="{{ url_for('static', filename='images/' + homepage_data.profile_pic) }}" alt="Foto Profil" class="h-48 w-48 mx-auto rounded-full object-cover mb-6 border-4 border-green-500 shadow-lg">
+    {% else %}
+    <div class="h-48 w-48 mx-auto rounded-full bg-gray-700 mb-6 animate-pulse"></div>
+    {% endif %}
+    
+    <p class="text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto">
+        {{ about_data.bio_text if about_data else '[Tulis biografi kamu di sini]' }}
+    </p>
+</div>
+
+<div class="mt-12 max-w-2xl mx-auto">
+    <h2 class="text-3xl font-bold mb-4 text-green-400">Keahlian</h2>
+    <ul class="list-disc list-inside space-y-2 text-gray-400">
+        {% if about_data and about_data.skills %}
+        {% for skill in about_data.skills.split(',') %}
+        <li>{{ skill.strip() }}</li>
+        {% endfor %}
+        {% else %}
+        <li>Belum ada keahlian yang ditambahkan.</li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Buat Proyek Baru{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-green-400">Buat Proyek Portofolio Baru</h1>
+    
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <form method="POST" action="{{ url_for('create_project') }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-4">
+                <label for="description" class="block text-gray-300 text-sm font-bold mb-2">Deskripsi</label>
+                {{ form.description(class="shadow appearance-none border-2 border-transparent rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-green-500 transition duration-300 bg-gray-700 text-white", rows="5") }}
+                {% for error in form.description.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="mb-6">
+                <label for="project_image" class="block text-gray-300 text-sm font-bold mb-2">Gambar Proyek</label>
+                <input type="file" name="project_image" id="project_image" class="block w-full text-sm text-gray-400
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-green-500 file:text-white
+                  hover:file:bg-green-600 transition duration-300
+                  bg-gray-700 rounded-lg p-2 cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">PNG, JPG, JPEG, GIF (Maks. 5MB)</p>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span>Simpan Proyek</span>
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="inline-flex items-center space-x-2 text-gray-400 hover:text-gray-200 transition duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    <span>Batal</span>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

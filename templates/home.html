@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="text-center py-12">
+    {% if homepage_data and homepage_data.profile_pic %}
+    <img src="{{ url_for('static', filename='images/' + homepage_data.profile_pic) }}" alt="Foto Profil" class="h-32 w-32 mx-auto rounded-full object-cover mb-4">
+    {% else %}
+    <div class="h-32 w-32 mx-auto rounded-full bg-gray-700 mb-4 animate-pulse"></div>
+    {% endif %}
+
+    <h1 class="text-6xl md:text-7xl font-bold mb-2 bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text font-great-vibes leading-tight">
+        {{ homepage_data.intro_title if homepage_data else 'Judul Default' }}
+    </h1>
+    <p class="text-xl md:text-2xl text-gray-400 font-great-vibes leading-tight">
+        {{ homepage_data.intro_subtitle if homepage_data else 'Sub-judul Default' }}
+    </p>
+</div>
+
+<div class="flex justify-center space-x-4 mb-12">
+    <a href="{{ url_for('blog') }}" class="bg-green-600 text-white font-bold py-2 px-6 rounded-full hover:bg-green-700 transition duration-300">Lihat Blog</a>
+    <a href="{{ url_for('portfolio') }}" class="bg-gray-700 text-gray-200 font-bold py-2 px-6 rounded-full hover:bg-gray-600 transition duration-300">Lihat Portofolio</a>
+</div>
+
+<div class="mt-12">
+    <h2 class="text-3xl font-bold mb-6 text-center">Postingan Terbaru</h2>
+    
+    <div id="post-container" class="flex flex-nowrap overflow-x-auto snap-x snap-mandatory space-x-4 pb-4 px-2 -mx-2 hide-scrollbar">
+        {% for post in posts %}
+        <div class="flex-none w-[90vw] md:w-[45vw] lg:w-[30vw] snap-center bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition duration-300">
+            <h3 class="text-xl font-bold mb-2 text-green-400">{{ post.title }}</h3>
+            <p class="text-sm text-gray-500 mb-4">{{ post.date_posted }}</p>
+            <p class="text-gray-400">{{ post.content[:200] }}...</p>
+        </div>
+        {% else %}
+        <p class="text-center text-gray-500 w-full">Belum ada postingan terbaru.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('post-container');
+        const cards = container.querySelectorAll('div.flex-none');
+        let currentIndex = 0;
+        let intervalId;
+
+        function startAutoScroll() {
+            intervalId = setInterval(() => {
+                currentIndex = (currentIndex + 1) % cards.length;
+                cards[currentIndex].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }, 5000); // Geser setiap 5 detik
+        }
+
+        function stopAutoScroll() {
+            clearInterval(intervalId);
+        }
+
+        // Mulai geser otomatis saat halaman dimuat
+        if (cards.length > 1) {
+            startAutoScroll();
+        }
+
+        // Hentikan geser otomatis saat cursor berada di atas kontainer
+        container.addEventListener('mouseenter', stopAutoScroll);
+        container.addEventListener('mouseleave', startAutoScroll);
+
+        // Hentikan geser otomatis saat pengguna mulai menggulir (untuk perangkat mobile)
+        container.addEventListener('touchstart', stopAutoScroll);
+    });
+</script>
+{% endblock %}
