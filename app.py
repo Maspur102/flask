@@ -13,7 +13,6 @@ import secrets
 from sqlalchemy import inspect
 import time
 import logging
-from flask_session import Session # Import Flask-Session
 
 # Konfigurasi Logging
 logging.basicConfig(level=logging.INFO)
@@ -28,17 +27,12 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Konfigurasi Sesi untuk keamanan dan stabilitas CSRF
-app.config['SESSION_TYPE'] = 'sqlalchemy' # Menggunakan SQLAlchemy untuk menyimpan sesi
-app.config['SESSION_SQLALCHEMY'] = db
+# Konfigurasi Sesi untuk keamanan (tanpa Flask-Session)
 app.config['SESSION_COOKIE_SECURE'] = True # Wajib HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True # Mencegah akses JavaScript ke cookie
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Mencegah CSRF
 
-# Inisialisasi Flask-Session
-sess = Session(app)
-
-db = SQLAlchemy(app) # Inisialisasi db setelah sess
+db = SQLAlchemy(app)
 
 # Konfigurasi Authlib (Google OAuth)
 oauth = OAuth(app)
