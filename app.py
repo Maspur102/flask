@@ -13,6 +13,7 @@ import secrets
 from sqlalchemy import inspect
 import time
 import logging
+import fcntl # Import fcntl untuk penguncian file
 
 # Konfigurasi Logging
 logging.basicConfig(level=logging.INFO)
@@ -27,10 +28,10 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Konfigurasi Sesi untuk keamanan (tanpa Flask-Session)
-app.config['SESSION_COOKIE_SECURE'] = True # Wajib HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True # Mencegah akses JavaScript ke cookie
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Mencegah CSRF
+# Konfigurasi Sesi untuk keamanan
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db = SQLAlchemy(app)
 
@@ -386,21 +387,23 @@ with app.app_context():
     # Daftar semua model yang perlu dibuat tabelnya
     models = [User, Post, Project, HomePage, AboutPage]
     
-    for model in models:
-        # Tambahkan delay untuk mengurangi risiko race condition di lingkungan serverless
-        time.sleep(0.5) 
-        with db.engine.connect() as connection:
-            if not inspector.has_table(model.__tablename__):
-                model.__table__.create(connection) # Buat tabel dengan connection
-            connection.commit() # Commit perubahan DDL
+    # Tambahkan penguncian file untuk memastikan hanya satu worker yang melakukan inisialisasi
+    lock_file_path = os.path.join(app.root_path, 'db_init.lock')
+    with open(lock_file_path, 'a') as lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX) # Kunci eksklusif
 
-    # Tambahkan user admin pertama kali jika belum ada
-    if User.query.count() == 0:
-        print("Membuat akun admin awal. Login pertama kali melalui Google untuk menjadi admin.")
+        try:
+            for model in models:
+                if not inspector.has_table(model.__tablename__):
+                    logger.info(f"Creating table: {model.__tablename__}")
+                    model.__table__.create(db.engine) # Buat tabel dengan engine
+                    time.sleep(0.1) # Sedikit delay antar tabel
+            
+            # Tambahkan user admin pertama kali jika belum ada
+            if User.query.count() == 0:
+                logger.info("Membuat akun admin awal. Login pertama kali melalui Google untuk menjadi admin.")
+        finally:
+            fcntl.flock(lock_file, fcntl.LOCK_UN) # Lepaskan kunci
 
 if __name__ == '__main__':
-    # Pastikan Anda sudah mengatur variabel lingkungan untuk SECRET_KEY, GOOGLE_CLIENT_ID, dan GOOGLE_CLIENT_SECRET
-    # Contoh: export SECRET_KEY='kunci-rahasia-anda'
-    # Contoh: export GOOGLE_CLIENT_ID='...'
-    # Contoh: export GOOGLE_CLIENT_SECRET='...'
     app.run(debug=True)
