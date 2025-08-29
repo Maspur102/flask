@@ -10,8 +10,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from authlib.integrations.flask_client import OAuth
 import secrets
-from sqlalchemy import inspect # Import inspect
-import time # Import time untuk delay
+from sqlalchemy import inspect
+import time
+import logging # Import logging
+
+# Konfigurasi Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Konfigurasi Upload Gambar dan OAuth
 UPLOAD_FOLDER = 'static/images'
@@ -19,8 +24,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
-# Kembali menggunakan SQLite
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db = SQLAlchemy(app)
 
@@ -147,14 +151,27 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    return oauth.google.authorize_redirect(url_for('auth_google', _external=True))
+    # Pastikan redirect_uri menggunakan HTTPS di lingkungan produksi
+    redirect_uri = url_for('auth_google', _external=True, _scheme='https' if request.is_secure else 'http')
+    logger.info(f"Redirecting to Google with URI: {redirect_uri}")
+    return oauth.google.authorize_redirect(redirect_uri)
 
 @app.route('/auth/google')
 def auth_google():
     try:
+        # Debugging: Log Client ID dan Client Secret
+        logger.info(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
+        logger.info(f"GOOGLE_CLIENT_SECRET: {'*' * len(os.environ.get('GOOGLE_CLIENT_SECRET')) if os.environ.get('GOOGLE_CLIENT_SECRET') else 'None'}")
+
+        # Debugging: Log redirect URI yang digunakan
+        redirect_uri = url_for('auth_google', _external=True, _scheme='https' if request.is_secure else 'http')
+        logger.info(f"Attempting to fetch token with redirect URI: {redirect_uri}")
+
         token = oauth.google.authorize_access_token()
+        logger.info(f"Token fetched successfully: {token}") # Log token
         resp = oauth.google.get('userinfo')
         user_info = resp.json()
+        logger.info(f"User info from Google: {user_info}") # Log info pengguna
         
         user = User.query.filter_by(google_id=user_info['id']).first()
         if not user:
@@ -177,6 +194,7 @@ def auth_google():
         flash('Login berhasil!', 'success')
         return redirect(url_for('admin_dashboard'))
     except Exception as e:
+        logger.error(f"Login Gagal: {e}", exc_info=True) # Log error lengkap
         flash(f'Login gagal: {e}', 'danger')
         return redirect(url_for('login'))
 
@@ -367,7 +385,6 @@ with app.app_context():
     models = [User, Post, Project, HomePage, AboutPage]
     
     for model in models:
-        # Gunakan db.engine.connect() untuk mendapatkan Connection
         # Tambahkan delay untuk mengurangi risiko race condition di lingkungan serverless
         time.sleep(0.5) 
         with db.engine.connect() as connection:
