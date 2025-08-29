@@ -6,20 +6,16 @@
 <div class="flex justify-center items-center py-12">
     <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm">
         <h1 class="text-2xl font-bold mb-6 text-center text-green-400">Login Admin</h1>
-        <form method="POST" action="{{ url_for('login') }}">
-            {{ form.hidden_tag() }}
-            <div class="mb-4">
-                {{ form.username.label(class="block text-gray-400 font-bold mb-2") }}
-                {{ form.username(class="shadow appearance-none border-2 border-transparent rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-green-500 transition duration-300 bg-gray-600 text-white") }}
-            </div>
-            <div class="mb-6">
-                {{ form.password.label(class="block text-gray-400 font-bold mb-2") }}
-                {{ form.password(class="shadow appearance-none border-2 border-transparent rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-green-500 transition duration-300 bg-gray-600 text-white") }}
-            </div>
-            <div class="flex items-center justify-between">
-                {{ form.submit(class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 w-full") }}
-            </div>
-        </form>
+        <p class="text-gray-400 text-center mb-6">Untuk masuk ke dashboard, silakan gunakan akun Google Anda.</p>
+        
+        <div class="flex items-center justify-center">
+            <a href="{{ url_for('login_google') }}" class="bg-white text-gray-800 font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 flex items-center space-x-2">
+                <svg class="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C35.94 33.32 32.5 37.5 24 37.5c-7.46 0-13.5-6.04-13.5-13.5s6.04-13.5 13.5-13.5c4.11 0 7.73 1.48 10.68 4.6l6.81-6.81C37.5 4.54 31.14 1.5 24 1.5 12.63 1.5 3.5 10.63 3.5 22c0 11.37 9.13 20.5 20.5 20.5 11.37 0 20.5-9.13 20.5-20.5 0-1.57-.22-3.11-.64-4.5z"/>
+                </svg>
+                <span>Masuk dengan Google</span>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
