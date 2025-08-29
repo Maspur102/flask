@@ -13,6 +13,7 @@ import secrets
 from sqlalchemy import inspect
 import time
 import logging
+from flask_session import Session # Import Flask-Session
 
 # Konfigurasi Logging
 logging.basicConfig(level=logging.INFO)
@@ -28,11 +29,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlit
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Konfigurasi Sesi untuk keamanan dan stabilitas CSRF
+app.config['SESSION_TYPE'] = 'sqlalchemy' # Menggunakan SQLAlchemy untuk menyimpan sesi
+app.config['SESSION_SQLALCHEMY'] = db
 app.config['SESSION_COOKIE_SECURE'] = True # Wajib HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True # Mencegah akses JavaScript ke cookie
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Mencegah CSRF
 
-db = SQLAlchemy(app)
+# Inisialisasi Flask-Session
+sess = Session(app)
+
+db = SQLAlchemy(app) # Inisialisasi db setelah sess
 
 # Konfigurasi Authlib (Google OAuth)
 oauth = OAuth(app)
@@ -157,7 +163,7 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    redirect_uri = url_for('auth_google', _external=True, _scheme='https') # Paksa HTTPS
+    redirect_uri = url_for('auth_google', _external=True, _scheme='https')
     logger.info(f"Redirecting to Google with URI: {redirect_uri}")
     return oauth.google.authorize_redirect(redirect_uri)
 
@@ -166,8 +172,7 @@ def auth_google():
     try:
         logger.info(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
         logger.info(f"GOOGLE_CLIENT_SECRET: {'*' * len(os.environ.get('GOOGLE_CLIENT_SECRET')) if os.environ.get('GOOGLE_CLIENT_SECRET') else 'None'}")
-
-        redirect_uri = url_for('auth_google', _external=True, _scheme='https') # Paksa HTTPS
+        redirect_uri = url_for('auth_google', _external=True, _scheme='https')
         logger.info(f"Attempting to fetch token with redirect URI: {redirect_uri}")
 
         token = oauth.google.authorize_access_token()
