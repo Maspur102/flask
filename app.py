@@ -391,7 +391,13 @@ def edit_about():
     return render_template('admin/edit_about.html', form=form)
 
 # Inisialisasi database saat aplikasi dimulai
+# Penting: Ini harus berada di luar blok if __name__ == '__main__': agar dijalankan oleh Gunicorn di Koyeb
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
+    # Pastikan Anda sudah mengatur variabel lingkungan untuk SECRET_KEY, GOOGLE_CLIENT_ID, dan GOOGLE_CLIENT_SECRET
+    # Contoh: export SECRET_KEY='kunci-rahasia-anda'
+    # Contoh: export GOOGLE_CLIENT_ID='...'
+    # Contoh: export GOOGLE_CLIENT_SECRET='...'
     app.run(debug=True)
