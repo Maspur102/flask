@@ -12,7 +12,7 @@ from authlib.integrations.flask_client import OAuth
 import secrets
 from sqlalchemy import inspect
 import time
-import logging # Import logging
+import logging
 
 # Konfigurasi Logging
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +26,12 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Konfigurasi Sesi untuk keamanan dan stabilitas CSRF
+app.config['SESSION_COOKIE_SECURE'] = True # Wajib HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True # Mencegah akses JavaScript ke cookie
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Mencegah CSRF
+
 db = SQLAlchemy(app)
 
 # Konfigurasi Authlib (Google OAuth)
@@ -151,27 +157,24 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    # Pastikan redirect_uri menggunakan HTTPS di lingkungan produksi
-    redirect_uri = url_for('auth_google', _external=True, _scheme='https' if request.is_secure else 'http')
+    redirect_uri = url_for('auth_google', _external=True, _scheme='https') # Paksa HTTPS
     logger.info(f"Redirecting to Google with URI: {redirect_uri}")
     return oauth.google.authorize_redirect(redirect_uri)
 
 @app.route('/auth/google')
 def auth_google():
     try:
-        # Debugging: Log Client ID dan Client Secret
         logger.info(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
         logger.info(f"GOOGLE_CLIENT_SECRET: {'*' * len(os.environ.get('GOOGLE_CLIENT_SECRET')) if os.environ.get('GOOGLE_CLIENT_SECRET') else 'None'}")
 
-        # Debugging: Log redirect URI yang digunakan
-        redirect_uri = url_for('auth_google', _external=True, _scheme='https' if request.is_secure else 'http')
+        redirect_uri = url_for('auth_google', _external=True, _scheme='https') # Paksa HTTPS
         logger.info(f"Attempting to fetch token with redirect URI: {redirect_uri}")
 
         token = oauth.google.authorize_access_token()
-        logger.info(f"Token fetched successfully: {token}") # Log token
+        logger.info(f"Token fetched successfully: {token}")
         resp = oauth.google.get('userinfo')
         user_info = resp.json()
-        logger.info(f"User info from Google: {user_info}") # Log info pengguna
+        logger.info(f"User info from Google: {user_info}")
         
         user = User.query.filter_by(google_id=user_info['id']).first()
         if not user:
@@ -194,7 +197,7 @@ def auth_google():
         flash('Login berhasil!', 'success')
         return redirect(url_for('admin_dashboard'))
     except Exception as e:
-        logger.error(f"Login Gagal: {e}", exc_info=True) # Log error lengkap
+        logger.error(f"Login Gagal: {e}", exc_info=True)
         flash(f'Login gagal: {e}', 'danger')
         return redirect(url_for('login'))
 
