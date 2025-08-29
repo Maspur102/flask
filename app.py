@@ -44,6 +44,7 @@ login_manager.login_view = 'login'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+
 # --- Database Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
