@@ -13,7 +13,7 @@ import secrets
 from sqlalchemy import inspect
 import time
 import logging
-import fcntl # Import fcntl untuk penguncian file
+from flask_session import Session # Import Flask-Session
 
 # Konfigurasi Logging
 logging.basicConfig(level=logging.INFO)
@@ -28,12 +28,19 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Konfigurasi Sesi untuk keamanan
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# Konfigurasi Sesi untuk keamanan dan stabilitas CSRF
+app.config['SESSION_TYPE'] = 'sqlalchemy' # Menggunakan SQLAlchemy untuk menyimpan sesi
+app.config['SESSION_SQLALCHEMY'] = db # Menggunakan objek db yang sama
+app.config['SESSION_PERMANENT'] = False # Sesi tidak permanen (akan berakhir setelah browser ditutup)
+app.config['SESSION_USE_SIGNER'] = True # Menandatangani sesi cookie
+app.config['SESSION_COOKIE_SECURE'] = True # Wajib HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True # Mencegah akses JavaScript ke cookie
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Mencegah CSRF
 
-db = SQLAlchemy(app)
+# Inisialisasi Flask-Session
+sess = Session(app) # Inisialisasi Flask-Session
+
+db = SQLAlchemy(app) # Inisialisasi db setelah sess (penting urutannya)
 
 # Konfigurasi Authlib (Google OAuth)
 oauth = OAuth(app)
@@ -387,23 +394,24 @@ with app.app_context():
     # Daftar semua model yang perlu dibuat tabelnya
     models = [User, Post, Project, HomePage, AboutPage]
     
-    # Tambahkan penguncian file untuk memastikan hanya satu worker yang melakukan inisialisasi
-    lock_file_path = os.path.join(app.root_path, 'db_init.lock')
-    with open(lock_file_path, 'a') as lock_file:
-        fcntl.flock(lock_file, fcntl.LOCK_EX) # Kunci eksklusif
+    for model in models:
+        # Tambahkan penguncian file untuk memastikan hanya satu worker yang melakukan inisialisasi
+        lock_file_path = os.path.join(app.root_path, 'db_init.lock')
+        with open(lock_file_path, 'a') as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX) # Kunci eksklusif
 
-        try:
-            for model in models:
-                if not inspector.has_table(model.__tablename__):
-                    logger.info(f"Creating table: {model.__tablename__}")
-                    model.__table__.create(db.engine) # Buat tabel dengan engine
-                    time.sleep(0.1) # Sedikit delay antar tabel
-            
-            # Tambahkan user admin pertama kali jika belum ada
-            if User.query.count() == 0:
-                logger.info("Membuat akun admin awal. Login pertama kali melalui Google untuk menjadi admin.")
-        finally:
-            fcntl.flock(lock_file, fcntl.LOCK_UN) # Lepaskan kunci
+            try:
+                for model in models:
+                    if not inspector.has_table(model.__tablename__):
+                        logger.info(f"Creating table: {model.__tablename__}")
+                        model.__table__.create(db.engine) # Buat tabel dengan engine
+                        time.sleep(0.1) # Sedikit delay antar tabel
+                
+                # Tambahkan user admin pertama kali jika belum ada
+                if User.query.count() == 0:
+                    logger.info("Membuat akun admin awal. Login pertama kali melalui Google untuk menjadi admin.")
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN) # Lepaskan kunci
 
 if __name__ == '__main__':
     app.run(debug=True)

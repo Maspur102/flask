@@ -6,6 +6,7 @@ Flask==2.3.3
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.0.3
 Flask-WTF==1.2.1
+Flask-Session==0.5.0  # Flask-Session ditambahkan di sini
 greenlet==2.0.2
 gunicorn==21.2.0
 itsdangerous==2.1.2
