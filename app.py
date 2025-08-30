@@ -28,19 +28,20 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Inisialisasi SQLAlchemy DULU
+db = SQLAlchemy(app)
+
 # Konfigurasi Sesi untuk keamanan dan stabilitas CSRF
 app.config['SESSION_TYPE'] = 'sqlalchemy' # Menggunakan SQLAlchemy untuk menyimpan sesi
-app.config['SESSION_SQLALCHEMY'] = db # Menggunakan objek db yang sama
-app.config['SESSION_PERMANENT'] = False # Sesi tidak permanen (akan berakhir setelah browser ditutup)
-app.config['SESSION_USE_SIGNER'] = True # Menandatangani sesi cookie
-app.config['SESSION_COOKIE_SECURE'] = True # Wajib HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True # Mencegah akses JavaScript ke cookie
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Mencegah CSRF
+app.config['SESSION_SQLALCHEMY'] = db # Sekarang 'db' sudah didefinisikan
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Inisialisasi Flask-Session
-sess = Session(app) # Inisialisasi Flask-Session
-
-db = SQLAlchemy(app) # Inisialisasi db setelah sess (penting urutannya)
+# Inisialisasi Flask-Session SETELAH db didefinisikan
+sess = Session(app)
 
 # Konfigurasi Authlib (Google OAuth)
 oauth = OAuth(app)
